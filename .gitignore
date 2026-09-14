@@ -12,3 +12,6 @@ build/
 
 # Logs
 *.log
+
+# Local frontend repo clone (separate GitHub repository)
+frontend-repo/
