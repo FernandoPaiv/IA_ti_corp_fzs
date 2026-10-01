@@ -18,8 +18,15 @@ async function bootstrap(): Promise<void> {
 
   // A Vercel roteia tudo para este mesmo servidor; validamos a origem do front
   // por CORS (allowlist), conforme ADR-001 §7.
+  // FRONTEND_ORIGIN aceita uma ou mais origens separadas por virgula (ex.: a
+  // URL de producao e a de preview/branch do front).
+  const allowedOrigins = (process.env.FRONTEND_ORIGIN ?? '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
   app.enableCors({
-    origin: process.env.FRONTEND_ORIGIN ?? true,
+    origin: allowedOrigins.length > 0 ? allowedOrigins : true,
     credentials: true,
   });
 
