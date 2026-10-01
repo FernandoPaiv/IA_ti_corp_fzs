@@ -43,7 +43,7 @@
 |---|---|
 | Runtime | Node.js LTS |
 | Framework | NestJS |
-| Adapter HTTP | Express via `@vendia/serverless-express`, com instância cacheada |
+| Adapter HTTP | Express (padrão do NestJS), com entrypoint `src/server.ts` detectado pela Vercel |
 | Organização de pastas | Por domínio (`src/modules/<dominio>/`) |
 | Camadas | Controller → Service → Repository |
 | Validação de entrada | Zod via `nestjs-zod` |
@@ -51,7 +51,7 @@
 
 - **Node LTS** — o mesmo TypeScript roda nos dois lados e a versão LTS me dá janela de suporte previsível.
 - **NestJS** — já era a decisão; mantida. Injeção de dependência é o que torna o service testável sem subir a aplicação inteira.
-- **Adapter serverless com instância cacheada** — na Vercel o Nest não roda como processo; sem guardar a aplicação criada fora do handler, cada request paga o bootstrap do container de DI.
+- **NestJS com entrypoint detectado, sem adapter serverless manual** — desde out/2025 a Vercel tem suporte *zero-config* a NestJS (Fluid Compute): ao encontrar `src/server.ts`, ela cria a function a partir de `app.listen(...)`. A versão anterior deste ADR previa `@vendia/serverless-express` com instância cacheada, mas esse adapter deixou de ser necessário (e é desaconselhado) nesse modelo — a própria plataforma mantém a instância quente. Sem `vercel.json`, o projeto deixa de ser tratado como site estático e o erro "No Output Directory named public found" não ocorre. Referência: https://vercel.com/docs/frameworks/backend/nestjs.
 - **Pastas por domínio** — organizar por camada técnica (`controllers/`, `services/`) faz cada feature nova espalhar arquivos em quatro pastas distantes.
 - **Controller → Service → Repository** — substitui "MVC" da lista original: não existe View no servidor, o front é uma SPA separada. O Repository isola o Prisma para o service não depender de ORM.
 - **Zod via `nestjs-zod`, sem `class-validator`** — é o que gera o OpenAPI a partir do mesmo schema que valida a entrada; com dois validadores, o documento gerado e a validação real divergem.
@@ -244,6 +244,7 @@
 | Biblioteca de componentes fechada (MUI, Mantine) | O design vem do Figma e precisaria ser imposto por cima do visual da biblioteca |
 | Next.js | Não preciso de SSR; teria dois backends no mesmo projeto |
 | VPS ou container (Fly, ECS) para a API | Resolveria região, worker, WebSocket e uso justo, mas contraria a decisão de hospedagem |
+| `@vendia/serverless-express` com handler manual | A Vercel passou a detectar NestJS zero-config (Fluid Compute, out/2025); o adapter manual deixou de ser necessário e adicionava o `vercel.json` que forçava o projeto ao modo estático (erro "No Output Directory named public") |
 
 
 
