@@ -6,15 +6,16 @@
 1. **Onde parei** — Tarefa: conclusão do scaffold do backend NestJS. Critério em
    andamento: PREENCHER (CA-xx de `docs/specs/`) — saúde da API/DB já em `main`,
    `/v1` e `/v1/health/db` respondendo; persistence (Prisma) ainda ausente.
-2. **Commitado / branch** — branch `main`. Último: `4894899` *Fix Vercel build:
-   drop framework null forcing static output directory*. Antes: `6816a17`,
-   `092ef77`, `b6a6fd8` (entrypoint serverless + health). Front:
-   `194190e` *Add live API/DB status indicator on home page*.
+2. **Commitado / branch** — branch `main`. Último: `f1cc343` *feat(cors): aceitar
+   allowlist de origens do front via FRONTEND_ORIGIN*. Antes: `b34fb01` (docs),
+   `9e35c56` (deploy zero-config Vercel, removeu `vercel.json`). Front:
+   `53947a6` *fix(api): usar URL do back da Vercel em producao*.
 3. **No banco local, não commitado** — Nada. Ainda não existe `prisma/` no repo
    (sem schema, sem migrations, sem seed `suporte_ti`). PREENCHER se houver
    alteração aplicada localmente.
-4. **Já publicado** — PREENCHER: URL da API na Vercel. Front publicado com a
-   home Nocturne consumindo `/v1/health/db`.
+4. **Já publicado** — Back: `https://ia-ti-corp-fzsbackend.vercel.app` (deploy
+   zero-config, `/v1/health/db`). Front: `https://ia-ti-corp-fzs-front-git-main-fezes-team.vercel.app`.
+   PENDENTE no painel: setar `FRONTEND_ORIGIN` do back para a URL do front.
 5. **Não fazer na próxima sessão** — Não escrever Prisma/Auth/CASL sem a spec de
    `docs/specs/` e sem plano aprovado; não tocar no Supabase remoto; não commitar
    `frontend-repo/` no repo do backend.
