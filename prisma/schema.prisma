@@ -1,0 +1,123 @@
+// Schema do EMPREST.AI (backend) — ADR-001 §5-§6.
+//
+// - Prisma Migrate é o dono único do schema (Supabase CLI não é segundo dono).
+// - Objetos que o Prisma não modela (RLS, policies) vivem em SQL bruto dentro
+//   da migration (ver prisma/migrations/**/migration.sql).
+// - Toda tabela de domínio tem `tenant_id` (isolamento multi-tenant por coluna).
+// - `user_id`/`created_by` referenciam o Supabase Auth (auth.users), que fica em
+//   outro schema — NÃO criamos FK para `auth.users`; só índice.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+/// Área/organização (tenant). O seed cria `suporte_ti`.
+model Tenant {
+  id        String   @id @default(uuid()) @db.Uuid
+  slug      String   @unique
+  name      String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  memberships Membership[]
+  equipments  Equipment[]
+  loans       Loan[]
+  auditLogs   AuditLog[]
+
+  @@map("tenants")
+}
+
+/// Vínculo usuário–tenant com papel por área. Uma pessoa pode atuar em mais de
+/// uma área com papel diferente em cada (ADR-001 §6).
+model Membership {
+  id        String   @id @default(uuid()) @db.Uuid
+  /// Supabase Auth (auth.users.id) — sem FK (outro schema).
+  userId    String   @map("user_id") @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  role      String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tenantId])
+  @@index([tenantId])
+  @@index([userId])
+  @@map("memberships")
+}
+
+/// Ativo de TI (equipamento).
+model Equipment {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  name      String
+  category  String
+  patrimony String?
+  status    String   @default("disponivel")
+  notes     String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  loans  Loan[]
+
+  @@unique([tenantId, patrimony])
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@map("equipments")
+}
+
+/// Empréstimo de equipamento. `returnedAt = NULL` = em aberto; partial index
+/// UNIQUE garante 1 empréstimo ativo por equipamento.
+model Loan {
+  id          String    @id @default(uuid()) @db.Uuid
+  tenantId    String    @map("tenant_id") @db.Uuid
+  equipmentId String    @map("equipment_id") @db.Uuid
+  /// Quem está com o item (Supabase Auth) — sem FK (outro schema).
+  userId      String    @map("user_id") @db.Uuid
+  borrowedAt  DateTime  @default(now()) @map("borrowed_at") @db.Timestamptz(6)
+  dueAt       DateTime  @map("due_at") @db.Timestamptz(6)
+  returnedAt  DateTime? @map("returned_at") @db.Timestamptz(6)
+  /// Quem registrou o empréstimo (Supabase Auth) — sem FK.
+  createdBy   String?   @map("created_by") @db.Uuid
+
+  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId])
+  @@index([tenantId, userId])
+  @@index([equipmentId])
+  @@map("loans")
+}
+
+/// Auditoria append-only (ADR-001 §7). Sem UPDATE/DELETE (policy + regra de app).
+model AuditLog {
+  id         BigInt   @id @default(autoincrement())
+  tenantId   String   @map("tenant_id") @db.Uuid
+  /// Ator (Supabase Auth) — sem FK.
+  actorId    String   @map("actor_id") @db.Uuid
+  action     String
+  resource   String
+  resourceId String?  @map("resource_id") @db.Uuid
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  tenant     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@map("audit_logs")
+}
+
+/// Contador de rate limit por IP/usuário (ADR-001 §7). Sem tenant_id: é global.
+/// RLS deny-by-default; só a API (role própria) escreve.
+model RateLimit {
+  key         String   @db.Text
+  windowStart DateTime @map("window_start") @db.Timestamptz(6)
+  count       Int      @default(0)
+
+  @@id([key, windowStart])
+  @@map("rate_limits")
+}
