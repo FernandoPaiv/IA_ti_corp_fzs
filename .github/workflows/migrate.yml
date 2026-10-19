@@ -1,0 +1,40 @@
+# Migrations antes do deploy (ADR-001 §8): rodam via `prisma migrate deploy`
+# em CI, nunca no boot (serverless sobe instancias em paralelo).
+#
+# Ordem: em paralelo com o deploy da Vercel (que dispara sozinho no push).
+# A migration e rapida e normalmente termina antes da function ficar utilizavel.
+# Se preferir ordem estrita, adicionar um passo que dispare o deploy da Vercel
+# via API apos este job (exige VERCEL_TOKEN).
+name: migrate
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# So uma execução por vez; cancela a anterior se houver novo push.
+concurrency:
+  group: migrate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      # Direta (porta 5432): o pooler em transaction mode nao suporta migrate.
+      - name: prisma migrate deploy
+        run: npx prisma migrate deploy
+        env:
+          # A migration usa a conexao direta; aceita tanto DIRECT_URL quanto DATABASE_URL direto.
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
