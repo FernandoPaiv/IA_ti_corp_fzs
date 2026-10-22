@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import { RequestMethod } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import 'dotenv/config';
@@ -32,7 +33,10 @@ async function bootstrap(): Promise<void> {
   });
 
   // Versionamento por prefixo de rota (ADR-001 §4).
-  app.setGlobalPrefix('v1');
+  // A raiz "/" e a unica excecao: serve a landing page "Hello World".
+  app.setGlobalPrefix('v1', {
+    exclude: [{ path: '/', method: RequestMethod.GET }],
+  });
 
   await app.listen(process.env.PORT ?? 3000);
 }
