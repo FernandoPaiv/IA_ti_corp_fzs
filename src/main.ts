@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { RequestMethod } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { ProblemDetailsFilter } from './http/problem-details.filter';
 import 'dotenv/config';
 
 /**
@@ -19,6 +20,7 @@ import 'dotenv/config';
  */
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
+  app.useGlobalFilters(new ProblemDetailsFilter());
 
   // CORS por allowlist do front (ADR-001 §7). FRONTEND_ORIGIN aceita uma ou
   // mais origens separadas por virgula (producao + preview do front).

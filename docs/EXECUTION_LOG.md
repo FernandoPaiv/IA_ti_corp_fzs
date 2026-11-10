@@ -437,3 +437,25 @@ service.
 - **Rollback**: Mechanim de reversão funciona corretamente, restaurando estado aprovado
 
 > *O registro é cronológico e não possui valores inventados.*
+
+---
+
+## 6. Entrega funcional — autenticação, catálogo/imagens e empréstimos
+
+### Implementação
+- A API agora expõe login, renovação de sessão e logout via Supabase Auth; rotas protegidas verificam assinatura JWT via JWKS e resolvem o tenant exclusivamente por claim assinado + membership. Sem claim, só é aceito usuário com vínculo único.
+- Catálogo autenticado e pesquisa Pixabay foram adicionados. Imagens selecionadas são associadas ao equipamento do tenant autenticado com URL e atribuição; a migration de metadados foi aplicada somente no banco local `127.0.0.1:55432/qa_test`.
+- Solicitação e devolução foram integradas à API e à interface `/app.html`. O fluxo aplica bloqueio por atraso, limite de 3 empréstimos, disponibilidade, isolamento, lock transacional por usuário e atualização atômica do equipamento. Cada operação grava audit log.
+- A página inicial e sua consulta existente ao endpoint de health/demo foram preservadas; o acesso ao novo app foi adicionado como link separado no frontend.
+
+### Evidências de validação
+- `npm run build`: aprovado.
+- Suíte completa (`npm test`), com conexão validada para o Postgres local de QA: **12 suites / 24 testes aprovados**.
+- Testes cobrem login/refresh/logout, credenciais inválidas, JWT malformado/expirado, membership e isolamento, pesquisa/associação de imagem com resposta Pixabay simulada, limite, atraso, manutenção, concorrência e devolução.
+- Navegador local: login, catálogo, solicitação, devolução, logout, página inicial, health e tela de demonstração verificados contra API mock local; nenhuma chamada a produção foi feita.
+- `node --check frontend-repo/app.js` e JSON de `frontend-repo/vercel.json`: aprovados.
+
+### Limites que bloqueiam validação/ações em produção
+- O ambiente não contém `SUPABASE_URL` nem `SUPABASE_ANON_KEY`; a identidade do projeto Supabase configurado no `.env` não foi confirmada. Login real e operação real do Pixabay permanecem sem evidência; as integrações foram testadas com endpoints locais simulados.
+- Nenhum dado foi inserido em produção, não foi usada a conta do professor e nenhum recurso remoto foi alterado. As inserções solicitadas ficam bloqueadas até confirmação independente do projeto/ambiente e das credenciais de teste autorizadas.
+- Alterações ainda precisam de commits e PRs separados porque API e frontend pertencem a repositórios distintos. Não houve push, merge ou deploy nesta rodada.
