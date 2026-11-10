@@ -72,14 +72,14 @@
 | Item | Status | Evidência |
 |------|--------|-----------|
 | SKILL.md criado | Concluído | `skills/SKILL.md` com instruções completas de utilização da Skill |
-| Script de pesquisa (`scripts/pixabay-search.js`) | Concluído | Busca imagens na API Pixabay com filtros e tratamento de resposta |
-| Script de download (`scripts/pixabay-download.js`) | Concluído | Download de imagens com salvamento local e verificação de integridade |
-| Script de processamento (`scripts/pixabay-process.js`) | Concluído | Redimensionamento para 800×600 pixels usando Sharp |
-| Script de validação (`scripts/pixabay-validate.js`) | Concluído | Validação de dimensões, conteúdo e requisitos do sistema |
-| Mecanismo de manifesto (`scripts/pixabay-manifest.js`) | Concluído | Registro de imagens com hash, metadados e rastreabilidade |
-| Mecanismo de idempotência | Concluído | `scripts/pixabay-idempotencia.js` - verificação de hash e registro no manifest |
-| Testes de validação | Pendente | Testes unitários e integração a serem executados |
-| Integração real API Pixabay | Pendente | Requires PIXABAY_API_KEY configurada |
+| Script de pesquisa (`scripts/pixabay-search.js`) | Concluído | Busca imagens na API Pixabay com filtros e tratamento de resposta; testado em modo mock |
+| Script de download (`scripts/pixabay-download.js`) | Concluído | Download de imagens com salvamento local e verificação de integridade; testado em modo mock |
+| Script de processamento (`scripts/pixabay-process.js`) | Concluído | Redimensionamento para 800×600 pixels usando Sharp; testado em modo mock |
+| Script de validação (`scripts/pixabay-validate.js`) | Concluído | Validação de dimensões, conteúdo e requisitos do sistema; testado em modo mock |
+| Mecanismo de manifesto (`scripts/pixabay-manifest.js`) | Concluído | Registro de imagens com hash, metadados e rastreabilidade; testado em modo mock |
+| Mecanismo de idempotência | Concluído | `scripts/pixabay-idempotencia.js` - verificação de hash e registro no manifest; testado em modo mock |
+| Testes de validação | Reprovado | Nenhum teste unitário específico encontrado para componentes Pixabay; estrutura de testes esboçada mas não executada |
+| Integração real API Pixabay | SEM_EVIDÊNCIA | Chave PIXABAY_API_KEY necessária; scripts funcionam em modo mock sem chave; fluxo não comprovado empiricamente |
 
 ### Rodada 1: Implementação dos scripts básicos
 - **Ação**: Criados scripts de busca, download, processamento e validação
