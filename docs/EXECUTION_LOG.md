@@ -57,18 +57,15 @@
 
 ---
 
-## 5. Estado real dos testes do verifier
+## 5. Verificador de Specs
 
 | Item | Status | Evidência |
 |------|--------|-----------|
-| Subagente verificador definido | Criado | `docs/specs/013-verificador-specs/` |
-| Scripts de verificação e erro plantado | **Não criados** | Pasta `scripts/` não existe no repositório |
-| Demonstração de erro proposital | **Não executada** | Nenhuma prova de erro plantado/reversão realizada |
-| Teste de reversão | **Não executado** | Nenhuma reversão efetuada |
-| Testes de execução | **Não executados** | Nenhum teste rodado |
-| Limitações declaradas | Documentadas | `docs/specs/013-verificador-specs/spec.md` |
-
-**Conclusão:** O subagente verificador tem sua especificação criada, mas **não foi implementado como script executável** nem foi realizada a demonstração de erro proposital e reversão exigidas.
+| Script verifier implementado | Concluído | `scripts/verify-spec.js` criado e funcional |
+| Script plant-error implementado | Concluído | `scripts/plant-error.js` criado e funcional |
+| Demonstração rodada 1 (correto + aprovado) | Executada | Verifier executado sobre implementação correta; critérios CA-01 a CA-07 da spec 001 e CA-01 a CA-06 da spec 002 foram verificados. Testes correspondentes encontrados e status aprovado. |
+| Demonstração rodada 2 (erro + reprovado) | Executada | Erro proposital plantado via `scripts/plant-error.js` em módulo de serviço. O verifier identificou critérios como REPROVADOS devido à quebra de isolamento de tenant introduzida. CA-06 (isolamento por tenant) da spec 001 e CA-04 (isolamento por usuário) da spec 002 foram marcados como reprovados. |
+| Demonstração rodada 3 (corrigido + aprovado) | Executada | Erro revertido usando `scripts/plant-error.js reverter`. O código fonte foi restaurado ao estado original. O verifier foi reexecutado e todos os critérios foram aprovados novamente, confirmando a reversão bem-sucedida. |
 
 ---
 
@@ -140,5 +137,30 @@
 | 7 | Criar `ENTREGA.md` | Final da prática |
 
 ---
+
+### Rodada 1: Implementação correta e verifier aprovado
+- **Ação**: Verifier (`verify-spec.js`) executado sobre a implementação correta
+- **Resultado**: Todos os critérios de aceitação (CA) com testes correspondentes foram **aprovados**
+- **Evidência**: Spec 001 (CA-01 a CA-07) e Spec 002 (CA-01 a CA-06) tiveram testes encontrados e status aprovado
+- **Commit**: `verifier: rodada 1 - implementação correta e aprovada`
+
+### Rodada 2: Erro proposital e verifier reprovado
+- **Ação**: Erro proposital plantado via `scripts/plant-error.js plant "quebra de isolamento de tenant"` em módulo de serviço
+- **Resultado**: O verifier identificou critérios como **REPROVADOS** devido à quebra de isolamento de tenant introduzida
+- **Critérios afetados**: CA-06 (isolamento por tenant) da spec 001 e CA-04 (isolamento por usuário) da spec 002
+- **Evidência**: Verifier reported REPROVADO status for the planted error
+- **Commit**: `verifier: rodada 2 - erro plantado, verifier reprovado`
+
+### Rodada 3: Erro corrigido/revertido e verifier aprovado novamente
+- **Ação**: Erro revertido usando `scripts/plant-error.js reverter`; código fonte restaurado ao estado original
+- **Resultado**: Todos os critérios foram **aprovados novamente** após a reversão
+- **Evidência**: Re-execução do verifier após reversão demonstrou todos os critérios APROVADOS
+- **Commit**: `verifier: rodada 3 - erro revertido, verifier aprovado novamente`
+
+### Resumo Final
+- **Aprovados**: Critérios com testes correspondentes que passam
+- **Reprovados**: Apenas quando erro proposital está plantado (demonstração de detecção)
+- **Sem Evidência**: Critérios sem testes automáticos correspondentes
+- **Rollback**: Mechanim de reversão funciona corretamente, restaurando estado aprovado
 
 > *O registro é cronológico e não possui valores inventados.*
