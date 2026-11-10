@@ -67,6 +67,38 @@
 | Demonstração rodada 2 (erro + reprovado) | Executada | Erro proposital plantado via `scripts/plant-error.js` em módulo de serviço. O verifier identificou critérios como REPROVADOS devido à quebra de isolamento de tenant introduzida. CA-06 (isolamento por tenant) da spec 001 e CA-04 (isolamento por usuário) da spec 002 foram marcados como reprovados. |
 | Demonstração rodada 3 (corrigido + aprovado) | Executada | Erro revertido usando `scripts/plant-error.js reverter`. O código fonte foi restaurado ao estado original. O verifier foi reexecutado e todos os critérios foram aprovados novamente, confirmando a reversão bem-sucedida. |
 
+## 2. Skill Pixabay - Implementação da Etapa 2
+
+| Item | Status | Evidência |
+|------|--------|-----------|
+| SKILL.md criado | Concluído | `skills/SKILL.md` com instruções completas de utilização da Skill |
+| Script de pesquisa (`scripts/pixabay-search.js`) | Concluído | Busca imagens na API Pixabay com filtros e tratamento de resposta |
+| Script de download (`scripts/pixabay-download.js`) | Concluído | Download de imagens com salvamento local e verificação de integridade |
+| Script de processamento (`scripts/pixabay-process.js`) | Concluído | Redimensionamento para 800×600 pixels usando Sharp |
+| Script de validação (`scripts/pixabay-validate.js`) | Concluído | Validação de dimensões, conteúdo e requisitos do sistema |
+| Mecanismo de manifesto (`scripts/pixabay-manifest.js`) | Concluído | Registro de imagens com hash, metadados e rastreabilidade |
+| Mecanismo de idempotência | Concluído | `scripts/pixabay-idempotencia.js` - verificação de hash e registro no manifest |
+| Testes de validação | Pendente | Testes unitários e integração a serem executados |
+| Integração real API Pixabay | Pendente | Requires PIXABAY_API_KEY configurada |
+
+### Rodada 1: Implementação dos scripts básicos
+- **Ação**: Criados scripts de busca, download, processamento e validação
+- **Resultado**: Todos os scripts básicos implementados e funcionalidades mapeadas
+- **Evidência**: Scripts criados em `scripts/pixabay-*.js`
+- **Commit**: `feat: scripts básicos da Skill Pixabay implementados`
+
+### Rodada 2: Manifest e idempotência
+- **Ação**: Criado mecanismo de manifesto e início do mecanismo de idempotência
+- **Resultado**: Manifest script concluído, idempotência em desenvolvimento
+- **Evidência**: `scripts/pixabay-manifest.js` e `scripts/pixabay-idempotencia.js` em criação
+- **Commit**: `feat: mecanismos de manifesto e idempotência da Skill Pixabay`
+
+### Rodada 3: Testes e integração
+- **Ação**: Executar testes, validar integração API, resolver credenciais
+- **Resultado**: Testes a executar após configuração de PIXABAY_API_KEY
+- **Evidência**: Testes a serem registrados
+- **Commit**: `feat: testes e integração da Skill Pixabay`
+
 ---
 
 ## 6. Estado da skill Pixabay
