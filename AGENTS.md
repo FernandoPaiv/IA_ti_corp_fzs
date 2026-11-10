@@ -108,3 +108,11 @@ Located in `frontend-repo/`. Stack (target):
 
 - After changing the API contract, regenerate `openapi.json` (backend) and regenerate the frontend client, so the contract verification in the frontend CI passes.
 - The source of truth for authorization decisions is the application layer (guards + CASL), with RLS as the last line of defense.
+
+## Subagentes
+- Ficam em agents/<nome>.md. O frontmatter diz quando delegar; o
+  corpo é a instrução completa do subagente.
+- Subagente não herda esta conversa: ao delegar, passe tudo que o
+  arquivo dele pede como entrada.
+- Se o harness não tiver subagentes, abra uma sessão nova e comece
+  com: "Aja conforme agents/<nome>.md." e as entradas pedidas.
