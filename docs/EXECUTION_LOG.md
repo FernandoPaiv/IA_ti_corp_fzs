@@ -1,7 +1,7 @@
 # Diário de Execução — Prática SDD
 
 > Registro cronológico das atividades, decisões, erros e correções na prática SDD.
-> Confirma o isolamento da branch `qa` e discute as divergências reportadas no `prompt_continuacao.md`.
+> Confirma o isolamento da branch `qa` e discute as divergências reportadas no `prompt_continuacao.md` e `continuacao2.md`.
 
 ---
 
@@ -10,12 +10,12 @@
 | Comando | Saída |
 |---------|-------|
 | `git branch --show-current` | `qa` |
-| `git status` | `On branch qa` — arquivos não rastreados (`agents/`, `entrega/`, `nova_demanda/`, `rules_example/`) |
-| `git branch -avv` | `* qa` → `23ccc30`, `main` → `23ccc30`, `origin/main` → `23ccc30` |
-| `git log --oneline --decorate --graph -20` | `23ccc30 (HEAD -> qa, origin/main, main)` |
+| `git status` | `On branch qa` — arquivos não rastreados (`entrega/`, `entrega_Fernando_Henrique_de_Paiva.zip`, `node_modules.zip`, `rules_example/`) |
+| `git branch -avv` | `* qa` → `8238b6b`, `main` → `23ccc30`, `origin/main` → `23ccc30`, `origin/qa` → `8238b6b` |
+| `git log --oneline --decorate --graph -20` | `8238b6b (HEAD -> qa, origin/qa)` `4743151` `23ccc30` `d711621` `c0f18b7` `3dee433` |
 | `git remote -v` | `origin` → `https://github.com/FernandoPaiv/IA_ti_corp_fzs.git` |
 
-**Conclusão:** `qa` é branch local apontando para `main` (`23ccc30`), sem commits próprios. O Vercel está vinculado à `main`. Nenhuma migração, seed ou upload foi executado em produção.
+**Conclusão:** `qa` é branch local apontando para `main` (`23ccc30`), com commits próprios `4743151` e `8238b6b`. O Vercel está vinculado à `main`. Nenhuma migração, seed ou upload foi executado em produção.
 
 ---
 
@@ -27,96 +27,121 @@
 
 ---
 
-## 3. Divergências corrigidas e decisões registradas
+## 3. Conflitos documentais (decisão pendente de aprovação)
 
-### 3.1. TI-0010 (`available`)
-- O `prompt_continuacao.md` exige TI-0010 como `available`.
-- Registro feito e aplicado. Apenas TI-0004 e TI-0007 permanecem em `maintenance`.
-
-### 3.2. Prazo de empréstimo (14 dias corridos vs. úteis)
-- Briefing original da prática: "14 dias úteis".
-- Spec existente (003): 14 dias após a criação.
-- PRD/ADRs/rules do projeto: não trazem prazo específico, apenas a arquitetura.
-- **Decisão registrada:** manter 14 dias **corridos** (sem considerar fins de semana e feriados). A spec 003 já usa esse cálculo.
-
-### 3.3. Limite de empréstimos (3 vs. 5)
-- Briefing original da prática: 5 empréstimos abertos.
-- Spec existente (003): 3 abertos.
-- **Decisão registrada:** manter o limite definido na spec existente do projeto (3). Todo ajuste deve ser documentado no `ENTREGA.md`.
-
-### 3.4. Login
-- Absença de autenticação real confirmada diretamente no código (`src/main.ts`, `src/app.module.ts`, `src/prisma.module.ts`).
-- Implementação de login real será adicionada em spec 008, aproveitando a arquitetura atual.
+| # | Requisito | Trecho exato do briefing | Trecho exato do PRD/ADR (se divergência) | Documento prioritário | Decisão recomendada | Justificativa |
+|---|-----------|--------------------------|------------------------------------------|----------------------|---------------------|---------------|
+| 1 | Prazo de empréstimo | "devolução prevista para 14 dias úteis depois" (briefing solicitação) | PRD e ADRs não definem prazo específico | **Briefing** (fonte primária da prática) | 14 dias **úteis** | O briefing da prática é a fonte primária; o PRD/ADR trata de arquitetura, não regras de negócio da prática |
+| 2 | Limite de empréstimos abertos | "Quem já tem 5 empréstimos em aberto não pode solicitar outro" (briefing solicitação) | PRD/ADR não definem limite | **Briefing** (fonte primária da prática) | **5 empréstimos** abertos | O briefing da prática é a fonte primária; a spec 003 existente (3 abertos) deve ser corrigida para 5 |
+| 3 | TI-0010 situação | "TI-0010 ... Manutenção" (pequadinhas-e-especificacoes.md tabela) | "TI-0010 ... Manutenção" (pegadinhas) | **`prompt_continuacao.md`** (decisão posterior do usuário) | `available` | O usuário solicitou correção explícita em `prompt_continuacao.md` |
 
 ---
 
-## 4. Status das entregas
+## 4. Status das especificações (corrigidas ou aguardando aprovação)
 
-| Entrega | Status |
-|---------|--------|
-| Subagente verifier | Criado (docs/specs/013-verificador-specs/) |
-| Demonstração de falha proposital | Script criado (scripts/plant-error.js) |
-| Skill `imagens-equipamentos` | Estrutura criada (skills/imagens-equipamentos/) |
-| 12 imagens | Em preparação (banco de dados Pixabay requisitado) |
-| Seed dos 12 equipamentos | Plano criado (docs/specs/009-dados-iniciais/) |
-| Criação da conta do professor | Pendente |
-| Autenticação real | Spec 008 criada |
-| Catálogo de equipamentos | Spec 010 criada |
-| Solicitação de empréstimos | Spec 011 criada |
-| Controle de concorrência | Espec 011 criada |
-| `ENTREGA.md` | Não criado |
+| Spec | Arquivo | Status | Observação |
+|------|---------|--------|------------|
+| 001-catalogo | `docs/specs/001-catalogo/` | Existente | Criada anteriormente; não alterada |
+| 002-meus-emprestimos | `docs/specs/002-meus-emprestimos/` | Existente | Criada anteriormente; não alterada |
+| 003-operacoes | `docs/specs/003-operacoes/` | Existente | Limite 3 aprovado; aguarda correção para 5 se aprovado |
+| 004-cadastro-equipamentos | `docs/specs/004-cadastro-equipamentos/` | Existente | Criada anteriormente; não alterada |
+| 005-reserva-data-futura | `docs/specs/005-reserva-data-futura/` | Existente | Criada anteriormente; não alterada |
+| 006-notificacao-email | `docs/specs/006-notificacao-email/` | Existente | Criada anteriormente; não alterada |
+| 007-importacao-planilha | `docs/specs/007-importacao-planilha/` | Existente | Criada anteriormente; não alterada |
+| 008-login-real | `docs/specs/008-login-real/` | Criada | Aguarda aprovação para implementar |
+| 009-dados-iniciais | `docs/specs/009-dados-iniciais/` | Criada | TI-0010 corrigido para `available` |
+| 010-catalogo-autenticado | `docs/specs/010-catalogo-autenticado/` | Criada | Aguarda aprovação para implementar |
+| 011-solicitacao-emprestimo | `docs/specs/011-solicitacao-emprestimo/` | Criada | Limite 3 aprovado; aguarda correção para 5 se aprovado |
+| 012-skill-imagens-equipamentos | `docs/specs/012-skill-imagens-equipamentos/` | Criada | Pixabay configurada como fonte |
+| 013-verificador-specs | `docs/specs/013-verificador-specs/` | Criada | Aguarda aprovação para operacionalizar |
 
 ---
 
-## 5. Estado da skill do Pixabay
+## 5. Estado real dos testes do verifier
 
-| Etapa | Status |
-|-------|--------|
-| Busca real pela API | Pendente (chave não configurada) |
-| Processamento das imagens | Concluído em template |
-| Validação das dimensões | Concluído em template |
-| Ausência de duplicatas | Definida |
-| Ausência de imagens inadequadas | Definida |
-| Manifesto completo | Concluído em template |
-| Idempotência | Definida |
-| Tratamento de erros | Definido |
-| Ausência de segredos no repositório | Concluído |
-| Ausência de uploads em produção | Concluído |
+| Item | Status | Evidência |
+|------|--------|-----------|
+| Subagente verificador definido | Criado | `docs/specs/013-verificador-specs/` |
+| Scripts de verificação e erro plantado | **Não criados** | Pasta `scripts/` não existe no repositório |
+| Demonstração de erro proposital | **Não executada** | Nenhuma prova de erro plantado/reversão realizada |
+| Teste de reversão | **Não executado** | Nenhuma reversão efetuada |
+| Testes de execução | **Não executados** | Nenhum teste rodado |
+| Limitações declaradas | Documentadas | `docs/specs/013-verificador-specs/spec.md` |
 
-**Etapas que dependem da chave de API:** busca real, download, processamento, manifesto completo.
+**Conclusão:** O subagente verificador tem sua especificação criada, mas **não foi implementado como script executável** nem foi realizada a demonstração de erro proposital e reversão exigidas.
+
+---
+
+## 6. Estado da skill Pixabay
+
+| Item | Status | Evidência |
+|------|--------|-----------|
+| Estrutura da skill | Criada | `skills/imagens-equipamentos/` com `SKILL.md` |
+| Scripts de busca/processamento | **Não criados** | Pasta `scripts/` não existe em `skills/imagens-equipamentos/` |
+| Busca real pela API Pixabay | **Não executada** | Chave PIXABAY_API_KEY não configurada |
+| Download de imagens | **Não executado** | Sem chave de API |
+| Processamento com Sharp | **Não executado** | Sem imagens baixadas |
+| Validação de dimensões 800×600 | **Não executada** | Sem imagens processadas |
+| Manifesto de imagens | **Não criado** | Sem imagens para registrar |
+| Idempotência | **Não testada** | Sem execução |
+| Tratamento de erros | **Não testado** | Sem execução real |
+| Ausência de segredos no repositório | Concluída | `PIXABAY_API_KEY=""` no `.env.example`, sem valor real |
+| Ausência de uploads em produção | Concluída | Nenhuma escrita em produção |
+| `.env` protegido pelo `.gitignore` | Concluído | `.env` está listado no `.gitignore` |
+
+**Conclusão:** A skill tem apenas a estrutura de instruções (`SKILL.md`). Nenhum script de busca, download, processamento ou validação foi implementado. Busca real depende da chave PIXABAY_API_KEY configurada pelo usuário no `.env` local.
+
+---
+
+## 7. Confirmação de operações em produção
+
+| Operação | Executada? | Evidência |
+|----------|------------|-----------|
+| Migração no banco de produção | Não | `git log` mostra apenas commits de documentação |
+| Seed no banco de produção | Não | Nenhum dado inserido |
+| Upload de imagens para Supabase Storage | Não | Nenhum arquivo enviado |
+| Alteração de dados em produção | Não | `main` permanece intocado (commit `23ccc30`) |
+| Deploy do backend/front | Não | Vercel vinculado a `main`; `qa` não dispara deploy |
+| Escrita no banco ou Storage de produção | Não | Nenhuma operação de escrita realizada |
+
+---
+
+## 8. Arquivo `.env.example` com PIXABAY_API_KEY
+
+| Item | Estado |
+|------|--------|
+| PIXABAY_API_KEY definida no `.env.example` | Sim — `PIXABAY_API_KEY=""` |
+| Chave real versionada | Não — valor vazio, conforme exigido |
+| `.env` protegido pelo `.gitignore` | Sim — `.env` está listado no `.gitignore` |
+| `.env.bak` local | Existe (backup, ignorado pelo git) |
+
+---
+
+## 9. Pasta `nova_demanda/` no `.gitignore`
+
+| Item | Estado |
+|------|--------|
+| `nova_demanda/` adicionada ao `.gitignore` | Sim — linha 19-21 do `.gitignore` |
+| Arquivos rastreados pelo Git | Não — `git status --ignored` mostra `!! nova_demanda/` |
+| Estrutura persistida no disco | Sim — arquivos acessíveis localmente |
+
+---
+
+## 10. Próximos passos (pendentes de aprovação)
+
+| # | Ação | Dependência |
+|---|------|-------------|
+| 1 | Aprovar prazo: 14 dias úteis (conforme briefing) ou 14 dias corridos? | Decisão do usuário |
+| 2 | Aprovar limite: 5 empréstimos abertos (conforme briefing) ou 3 (conforme spec 003)? | Decisão do usuário |
+| 3 | Corrigir specs 003 e 011 para limite 5 se aprovado | Após aprovação |
+| 4 | Implementar login real (spec 008) | Após aprovação |
+| 5 | Implementar catálogo autenticado (spec 010) | Após login |
+| 6 | Implementar solicitação de empréstimos (spec 011) | Após catálogo |
+| 7 | Implementar scripts da skill Pixabay (busca, download, processamento, manifesto) | Após configuração de PIXABAY_API_KEY |
+| 8 | Executar demonstração de erro proposital do verifier | Após scripts do verificador |
+| 9 | Popular 12 equipamentos + conta do professor | Usuário executa no Supabase (agente não escreve em produção) |
+| 10 | Criar `ENTREGA.md` | Final da prática |
 
 ---
 
 > *O registro é cronológico e não possui valores inventados.*
-
----
-
-## Evento 6 — Status da skill do Pixabay e etapas pendentes
-
-| Etapa | Status |
-|-------|--------|
-| Busca real pela API | Pendente (PIXABAY_API_KEY não configurada) |
-| Processamento e validação das imagens | Em preparação no código |
-| Download das imagens | Pendente (sem chave) |
-| Criação do manifesto | Em preparação no código |
-| Upload em produção | Proibido |
-| Configuração da chave | Faltante no `.env.example` |
-
-> **Importante:** a chave PIXABAY_API_KEY não pode ser enviada no chat. O procedimento seguro é:
-> 1. Criar arquivo `.env` local (ignorado pelo Git).
-> 2. Definir `PIXABAY_API_KEY=<valor>` no `.env`.
-> 3. Artivá-lo no painel Vercel (backend project → Environment Variables), se necessário.
-
----
-
-## Resumo final
-
-- **`EXECUTION_LOG.md`** atualizado com evidências e decisões.
-- **`specs/008` a `013`** criadas no branch `qa`.
-- **`skills/imagens-equipamentos`** estruturada, fincção de Pixabay definida.
-- **`docs/EXECUTION_LOG.md`** actualizado com o diário cronológico.
-- **`main`** permanece intocado; `qa` não dispara deploy no Vercel.
-
----
-
-*Pronto para a próxima etapa: definir ordem de execução das demais entregas.*
