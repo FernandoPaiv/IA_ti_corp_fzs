@@ -29,10 +29,10 @@
 
 ## 3. Conflitos documentais (decisão pendente de aprovação)
 
-| # | Requisito | Trecho exato do briefing | Trecho exato do PRD/ADR (se divergência) | Documento prioritário | Decisão recomendada | Justificativa |
-|---|-----------|--------------------------|------------------------------------------|----------------------|---------------------|---------------|
-| 1 | Prazo de empréstimo | "devolução prevista para 14 dias úteis depois" (briefing solicitação) | PRD e ADRs não definem prazo específico | **Briefing** (fonte primária da prática) | 14 dias **úteis** | O briefing da prática é a fonte primária; o PRD/ADR trata de arquitetura, não regras de negócio da prática |
-| 2 | Limite de empréstimos abertos | "Quem já tem 5 empréstimos em aberto não pode solicitar outro" (briefing solicitação) | PRD/ADR não definem limite | **Briefing** (fonte primária da prática) | **5 empréstimos** abertos | O briefing da prática é a fonte primária; a spec 003 existente (3 abertos) deve ser corrigida para 5 |
+| # | Requisito | Trecho exato do briefing | Trecho exato do PRD/ADR (se divergência) | Documento priorizado | Decisão registrada | Justificativa |
+|---|-----------|--------------------------|------------------------------------------|----------------------|-------------------|---------------|
+| 1 | Prazo de empréstimo | "devolução prevista para 14 dias úteis depois" (briefing solicitação) | PRD e ADRs estabelecem 14 dias após a criação (spec 003) | **PRD/ADR 3** (regras vigentes do negócio) | **14 dias corridos** | O usuário confirmou que as regras do PRD/ADR 3 prevalecem sobre o briefing. A divergência é tratada como parte da pegadinha da atividade, não como mudança formal de negócio. |
+| 2 | Limite de empréstimos abertos | "Quem já tem 5 empréstimos em aberto não pode solicitar outro" (briefing solicitação) | PRD e ADRs estabelecem 3 empréstimos em aberto (spec 003) | **PRD/ADR 3** (regras vigentes do negócio) | **3 empréstimos** abertos | O usuário confirmou que as regras do PRD/ADR 3 prevalecem sobre o briefing. A divergência é tratada como parte da pegadinha da atividade, não como mudança formal de negócio. |
 | 3 | TI-0010 situação | "TI-0010 ... Manutenção" (pequadinhas-e-especificacoes.md tabela) | "TI-0010 ... Manutenção" (pegadinhas) | **`prompt_continuacao.md`** (decisão posterior do usuário) | `available` | O usuário solicitou correção explícita em `prompt_continuacao.md` |
 
 ---
@@ -43,7 +43,7 @@
 |------|---------|--------|------------|
 | 001-catalogo | `docs/specs/001-catalogo/` | Existente | Criada anteriormente; não alterada |
 | 002-meus-emprestimos | `docs/specs/002-meus-emprestimos/` | Existente | Criada anteriormente; não alterada |
-| 003-operacoes | `docs/specs/003-operacoes/` | Existente | Limite 3 aprovado; aguarda correção para 5 se aprovado |
+| 003-operacoes | `docs/specs/003-operacoes/` | Existente | Limite 3 confirmado (PRD/ADR 3); não alterado |
 | 004-cadastro-equipamentos | `docs/specs/004-cadastro-equipamentos/` | Existente | Criada anteriormente; não alterada |
 | 005-reserva-data-futura | `docs/specs/005-reserva-data-futura/` | Existente | Criada anteriormente; não alterada |
 | 006-notificacao-email | `docs/specs/006-notificacao-email/` | Existente | Criada anteriormente; não alterada |
@@ -51,7 +51,7 @@
 | 008-login-real | `docs/specs/008-login-real/` | Criada | Aguarda aprovação para implementar |
 | 009-dados-iniciais | `docs/specs/009-dados-iniciais/` | Criada | TI-0010 corrigido para `available` |
 | 010-catalogo-autenticado | `docs/specs/010-catalogo-autenticado/` | Criada | Aguarda aprovação para implementar |
-| 011-solicitacao-emprestimo | `docs/specs/011-solicitacao-emprestimo/` | Criada | Limite 3 aprovado; aguarda correção para 5 se aprovado |
+| 011-solicitacao-emprestimo | `docs/specs/011-solicitacao-emprestimo/` | Criada | Limite 3 confirmado (PRD/ADR 3); não alterado |
 | 012-skill-imagens-equipamentos | `docs/specs/012-skill-imagens-equipamentos/` | Criada | Pixabay configurada como fonte |
 | 013-verificador-specs | `docs/specs/013-verificador-specs/` | Criada | Aguarda aprovação para operacionalizar |
 
@@ -131,16 +131,13 @@
 
 | # | Ação | Dependência |
 |---|------|-------------|
-| 1 | Aprovar prazo: 14 dias úteis (conforme briefing) ou 14 dias corridos? | Decisão do usuário |
-| 2 | Aprovar limite: 5 empréstimos abertos (conforme briefing) ou 3 (conforme spec 003)? | Decisão do usuário |
-| 3 | Corrigir specs 003 e 011 para limite 5 se aprovado | Após aprovação |
-| 4 | Implementar login real (spec 008) | Após aprovação |
-| 5 | Implementar catálogo autenticado (spec 010) | Após login |
-| 6 | Implementar solicitação de empréstimos (spec 011) | Após catálogo |
-| 7 | Implementar scripts da skill Pixabay (busca, download, processamento, manifesto) | Após configuração de PIXABAY_API_KEY |
-| 8 | Executar demonstração de erro proposital do verifier | Após scripts do verificador |
-| 9 | Popular 12 equipamentos + conta do professor | Usuário executa no Supabase (agente não escreve em produção) |
-| 10 | Criar `ENTREGA.md` | Final da prática |
+| 1 | Implementar login real (spec 008) | Pronto para iniciar |
+| 2 | Implementar catálogo autenticado (spec 010) | Após login |
+| 3 | Implementar solicitação de empréstimos (spec 011) | Após catálogo |
+| 4 | Implementar scripts da skill Pixabay (busca, download, processamento, manifesto) | Após configuração de PIXABAY_API_KEY |
+| 5 | Executar demonstração de erro proposital do verifier | Após scripts do verificador |
+| 6 | Popular 12 equipamentos + conta do professor | Usuário executa no Supabase (agente não escreve em produção) |
+| 7 | Criar `ENTREGA.md` | Final da prática |
 
 ---
 
