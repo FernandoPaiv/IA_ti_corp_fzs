@@ -119,7 +119,11 @@ async function main() {
   }
 }
 
-main().catch(err => {
-  console.error('❌ Erro inesperado:', err);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch(err => {
+    console.error('❌ Erro inesperado:', err);
+    process.exit(1);
+  });
+}
+
+module.exports = { searchImages, searchAndSave };

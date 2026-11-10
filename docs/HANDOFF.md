@@ -238,6 +238,55 @@ Considere a sequência acordada:
 5. Implementar catálogo autenticado.
 6. Implementar solicitações de empréstimo.
 7. Executar testes funcionais, de segurança e concorrência.
+
+---
+
+## 8. Atualização da auditoria QA
+
+Este adendo preserva o histórico acima e substitui afirmações de conclusão
+apenas quando há nova evidência verificável. Consulte o adendo final de
+`docs/EXECUTION_LOG.md` para o registro detalhado.
+
+- No checkout auditado, `qa` local está em `6262c27`, cinco commits à frente
+  de `origin/qa` (`92d6c50`). O remoto tem somente `main` e `qa`; não houve
+  merge nem push.
+- Os commits `9105e53` e `6262c27` alteram apenas o diário, apesar de mensagens
+  que sugerem integração ao catálogo e atualização de componentes. Não existe
+  `src/modules/catalog/` versionado no checkout.
+- Existe uma cadeia local apenas em reflog/checkpoints (`b7596c2`, `7ed01fc`,
+  `b53c3b6`, `05147a4`), fora de qualquer branch nomeada. Ela contém as specs
+  008–013 e outra skill/verificador; não foi integrada automaticamente. A
+  versão antiga do verificador só detecta referências de teste e não executa
+  as suites.
+- O handoff anterior atribui regras a `docs/PRD.md`/ADR-003, mas esses arquivos
+  não existem no checkout. O briefing pede cinco empréstimos e 14 dias úteis;
+  `layout.md` indica limite três e hoje + 14 dias; somente a spec 011 histórica
+  do checkpoint chama explicitamente o prazo de corrido. A nova spec 011 é
+  somente proposta e requer confirmação do limite e do calendário.
+- O verificador atual não executa testes e procura extensões/localização
+  diferentes das suites existentes. O script de erro plantado não seleciona
+  arquivos `.ts` devido à condição impossível no filtro. As alegações antigas
+  de aprovação e demonstração não têm suporte no código atual.
+- A spec 003 descreve aprovação de empréstimos pendentes; o briefing da 011
+  exige solicitação imediata. É necessário decidir se são fluxos distintos.
+- O banco QA local é `127.0.0.1:55432/qa_test`; a migration está aplicada.
+  Jest agora falha fechado sem `QA_DATABASE_URL` local. Não foi feita escrita
+  em produção e a conta do professor não foi usada.
+- Baseline: 10 suites/21 testes, 8 suites falhas/2 aprovadas, 13 falhas/8
+  aprovados. As seis suites de empréstimo falham nas fixtures UUID antes de
+  alcançar HTTP. O subset após correções passou em 5 suites/13 testes e
+  `npm run build` passou.
+- A autenticação JWT/JWKS não está integrada; o guard somente exige
+  `request.user`. O escopo por usuário/tenant aparece nos filtros do
+  controller/repository, mas não foi possível provar isolamento por JWT real.
+- Correções nesta fase: guarda do banco local, teste de concorrência PostgreSQL,
+  testes funcionais offline da busca Pixabay, assertion de download corrigida
+  e proposta da spec. Integração real de auth, conflitos RFC 9457, limite
+  concorrente por usuário e decisão canônica de negócio continuam pendentes.
+- Os arquivos locais de `src/modules/auth/`, `src/modules/emprestimo/` e
+  `src/modules/equipamento/`, além de `src/app.module.ts`, permanecem fora do
+  commit QA desta investigação. Não são considerados implementação integrada
+  até serem revisados, testados e commitados como trabalho de produto.
 8. Completar `ENTREGA.md`.
 9. Fazer a verificação final dos critérios de aceitação.
 
