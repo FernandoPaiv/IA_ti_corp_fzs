@@ -199,6 +199,9 @@
 - Branch de trabalho: `qa` em `6262c27`; `origin/qa` em `92d6c50`; `origin/main`
   em `23ccc30`. `origin/main` é ancestral de `qa`; `qa` contém cinco commits
   locais ainda não publicados e não está atrás de `origin/qa`.
+- Depois desse snapshot, o commit local `d50c972` registrou os artefatos QA;
+  esta atualização documenta o incidente em uma alteração local adicional.
+  Nada foi enviado ao remoto.
 - O GitHub lista somente `main` e `qa`; não há branch remota `develop`. A
   execução do workflow de GitHub Actions para `qa` retornou zero runs. O único
   workflow atual é `migrate.yml`, acionado por `main` e manualmente.
@@ -285,16 +288,31 @@
   porta ou banco diferentes do destino local. Verificações confirmaram rejeição
   de URL remota e de variável ausente. As execuções deste adendo usaram apenas
   o banco local.
-- Uma execução anterior do comando padrão carregou configuração de `.env` com
-  endpoint remoto; os registros disponíveis indicam consultas/transações de
-  leitura, sem evidência de `INSERT`, `UPDATE` ou `DELETE`. Nenhuma nova
-  conexão remota foi feita nesta fase. A conta
+- Uma execução anterior do comando padrão carregou `.env` remoto; os registros
+  daquele run indicavam consultas/transações de leitura. Posteriormente, dois
+  scripts diretos de limpeza criaram `PrismaClient` sem importar a guarda e
+  definiram somente `QA_DATABASE_URL`; o Prisma carregou `DATABASE_URL` de
+  `.env`, que aponta para Supabase remoto. O primeiro script encontrou sete
+  tenants com slugs de fixture, confirmou zero loans/equipments/memberships e
+  executou sete deletes; a saída reportou sete removidos. A migration tem
+  relações cascade para tenants, incluindo audit logs; a consulta não contou
+  audit logs, então eventuais linhas relacionadas também podem ter sido
+  removidas. Uma consulta direta posterior encontrou zero tenants com esses
+  slugs. Portanto houve escrita no endpoint remoto; não se confirmou se esse
+  projeto é produção ou staging. Tratar como incidente de possível escrita em
+  produção. Nenhuma tentativa de restauração ou nova conexão remota será feita
+  sem autorização do responsável e evidência da origem correta dos registros.
+- A guarda Jest não impediu esses scripts diretos: ela só roda no Jest e os
+  scripts não passaram `DATABASE_URL`/`DIRECT_URL` explicitamente. A correção
+  imediata é não usar comandos Prisma diretos sem carregar a guarda e conferir
+  explicitamente o host, porta e banco antes da conexão. A conta
   `marcelo.grilo@institutojef.org.br` não foi consultada nem usada; não é
-  possível confirmar seu estado atual em produção a partir desta auditoria.
-- As fixtures antigas deixaram sete tenants de teste vazios no banco local.
-  Eles foram identificados por slug, verificados sem empréstimos,
-  equipamentos ou memberships e removidos individualmente. O teste novo
-  também limpa somente os dados aleatórios que ele próprio cria.
+  possível confirmar seu estado atual no endpoint remoto.
+- O teste novo limpa somente os dados aleatórios que ele próprio cria. A
+  execução completa mais recente usou o setup Jest que força a URL local. Os
+  logs mostram que as seis suites falhas só selecionaram tenants existentes;
+  os upserts fizeram commit sem INSERT e as tentativas de equipamento deram
+  rollback após erro UUID.
 
 ### 9.4 Falhas de teste investigadas
 
@@ -311,10 +329,12 @@ Resultado de baseline completo anterior às correções de teste: **10 suites,
 
 Após as correções, o subconjunto seguro (quatro suites Pixabay e a nova
 integração de banco) passou: **5 suites, 13 testes**. `npm run build` também
-passou. A suíte completa não foi repetida porque os testes de empréstimo não
-iniciam a API e fazem requests diretos a `localhost:3000`; a causa primária
-das falhas já foi reproduzida no banco local e as fixtures inválidas não foram
-alteradas para mascarar o problema.
+passou. A execução completa final, com `QA_DATABASE_URL` validada pelo setup
+Jest e após confirmar que não havia serviço em `localhost:3000`, resultou em
+**11 suites: 6 falharam e 5 passaram; 25 testes: 12 falharam e 13 passaram**.
+As 12 falhas são exclusivamente das seis suites de empréstimo e todas
+terminam no erro Prisma `Inconsistent column data: Error creating UUID,
+invalid character ... found 't' at 1`. Nenhum request HTTP foi alcançado.
 
 Foi adicionada uma integração PostgreSQL com UUIDs aleatórios que tenta criar
 dois empréstimos abertos simultâneos para o mesmo equipamento. Ela passou e
@@ -342,8 +362,9 @@ service.
 - O endpoint recebe `equipmentId` UUID, enquanto os testes tentam usar
   patrimônio. O cursor usa a chave do empréstimo sem evidência de contrato
   compatível com o cursor e não há prova de paginação estável.
-- A conta do professor permaneceu fora das validações. Nenhuma escrita em
-  produção, deploy, push ou merge foi executado.
+- A conta do professor permaneceu fora das validações. Não houve deploy, push
+  ou merge. A afirmação anterior de “nenhuma escrita remota” fica corrigida
+  pelo incidente documentado acima.
 
 ### 9.6 Correções feitas e decisões pendentes
 
