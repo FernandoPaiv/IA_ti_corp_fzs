@@ -458,4 +458,5 @@ service.
 ### Limites que bloqueiam validação/ações em produção
 - O ambiente não contém `SUPABASE_URL` nem `SUPABASE_ANON_KEY`; a identidade do projeto Supabase configurado no `.env` não foi confirmada. Login real e operação real do Pixabay permanecem sem evidência; as integrações foram testadas com endpoints locais simulados.
 - Nenhum dado foi inserido em produção, não foi usada a conta do professor e nenhum recurso remoto foi alterado. As inserções solicitadas ficam bloqueadas até confirmação independente do projeto/ambiente e das credenciais de teste autorizadas.
-- Alterações ainda precisam de commits e PRs separados porque API e frontend pertencem a repositórios distintos. Não houve push, merge ou deploy nesta rodada.
+- Commits locais: backend `84ad88c` na branch `qa`; frontend `9233afe` na branch `qa-functional-app`. Como são repositórios distintos, são necessárias PRs separadas.
+- O push foi tentado, mas não havia credencial GitHub disponível no ambiente não interativo (`git push` recusou prompt de autenticação); por isso nenhum branch remoto ou PR foi criado. Não houve merge nem deploy.
