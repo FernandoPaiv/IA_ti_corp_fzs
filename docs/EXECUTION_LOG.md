@@ -460,3 +460,19 @@ service.
 - Nenhum dado foi inserido em produção, não foi usada a conta do professor e nenhum recurso remoto foi alterado. As inserções solicitadas ficam bloqueadas até confirmação independente do projeto/ambiente e das credenciais de teste autorizadas.
 - Commits locais: backend `84ad88c` na branch `qa`; frontend `9233afe` na branch `qa-functional-app`. Como são repositórios distintos, são necessárias PRs separadas.
 - O push foi tentado, mas não havia credencial GitHub disponível no ambiente não interativo (`git push` recusou prompt de autenticação); por isso nenhum branch remoto ou PR foi criado. Não houve merge nem deploy.
+
+## 7. Preparacao para producao — configuracao, JWT, migrations e seeds
+
+- Atualizado `.env.example` do backend com placeholders sem credenciais, variaveis de runtime, migration, Pixabay e scripts de seed. Frontend ganhou `.env.example` explicando que o site estatico nao carrega env e nao recebe chaves Supabase.
+- API valida `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `FRONTEND_ORIGIN`, `JWKS_URI` e `PORT` antes do bootstrap; erro interrompe a inicializacao com mensagem clara. `DIRECT_URL` fica reservado ao Prisma Migrate. `JWT_SECRET` nao e usado: JWT e verificado por JWKS Supabase (ES256/RS256).
+- `tenant_id` e obrigatorio no JWT, UUID e validado contra membership do mesmo usuario/tenant; token ausente ou sem membership e rejeitado. Incluido `supabase/access-token-hook.sql` e documentacao para habilitacao do hook e selecao segura do tenant.
+- Seed padrao agora garante apenas `suporte_ti`; removidos equipamentos e emprestimos ficticios. Scripts separados criam/reutilizam somente usuario Auth e membership de Marcelo (admin) ou QA (colaborador), com confirmacao explicita e sem dados operacionais. Seeds exigem confirmacao de destino Supabase e host do banco antes de conectar/escrever.
+- Busca Pixabay retorna lista vazia e emite aviso em caso de chave ausente, falha HTTP, resposta invalida ou timeout. Adicionados testes para claim ausente/tenant divergente, indisponibilidade Pixabay e validacao de ambiente.
+- Revisadas migrations existentes: ordem cronologica preservada; primeira migration cria o schema inicial e politicas, segunda adiciona colunas opcionais de imagem. Nenhuma migration, seed, hook ou escrita foi executada no Supabase/Producao.
+- Documentados origem das variaveis, procedimento `prisma migrate status`/`migrate deploy`, verificacao do historico preexistente e limites de seed em `docs/production-readiness.md`.
+- `@prisma/client` movido para dependencia de runtime. Corrigido conflito peer preexistente alinhando `@nestjs/swagger` 7.4.2 ao NestJS 10; lockfile atualizado. O `npm ci` limpo concluiu e o build agora gera Prisma Client explicitamente antes do TypeScript, sem depender de postinstall permitido.
+- Revisao por padroes de credenciais em arquivos versionados nao encontrou tokens/chaves embutidos.
+- `npm ci` reportou 45 advisories de dependencias (5 low, 27 moderate, 13 high); nao foram aplicadas atualizacoes de seguranca fora do escopo de compatibilidade/deploy.
+- `npm run build` aprovou com geracao explicita do Prisma Client; `npx prisma validate` aprovou. `npm ls` confirmou NestJS 10, Swagger 7.4.2 e Prisma Client 6.19.3. `npm run test:unit`: 4 suites / 12 testes aprovados (JWKS + claim/membership, validacao de ambiente, graceful failure do Pixabay e seguranca de seed).
+- `npm test` foi tentado, mas o guard interrompeu as 14 suites antes de executar qualquer teste porque `QA_DATABASE_URL` nao esta configurada. O guard exige `127.0.0.1:55432/qa_test`; nenhuma conexao ou escrita remota foi tentada. Testes e2e/DB permanecem pendentes ate disponibilizar essa URL local.
+- `node --check frontend-repo/app.js`, parse de `frontend-repo/vercel.json` e `git diff --check` aprovados. Nenhuma migration, seed, hook, deploy, merge ou push foi executado.

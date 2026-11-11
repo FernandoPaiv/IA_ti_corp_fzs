@@ -1,9 +1,10 @@
 import 'reflect-metadata';
+import 'dotenv/config';
 import { RequestMethod } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ProblemDetailsFilter } from './http/problem-details.filter';
-import 'dotenv/config';
+import { validateEnvironment } from './config/environment';
 
 /**
  * Entrypoint principal (padrão do NestJS) — ADR-001 §3.
@@ -19,18 +20,14 @@ import 'dotenv/config';
  * Referência: https://vercel.com/docs/frameworks/backend/nestjs
  */
 async function bootstrap(): Promise<void> {
+  const config = validateEnvironment();
   const app = await NestFactory.create(AppModule);
   app.useGlobalFilters(new ProblemDetailsFilter());
 
   // CORS por allowlist do front (ADR-001 §7). FRONTEND_ORIGIN aceita uma ou
   // mais origens separadas por virgula (producao + preview do front).
-  const allowedOrigins = (process.env.FRONTEND_ORIGIN ?? '')
-    .split(',')
-    .map((origin) => origin.trim())
-    .filter(Boolean);
-
   app.enableCors({
-    origin: allowedOrigins.length > 0 ? allowedOrigins : true,
+    origin: config.frontendOrigins,
     credentials: true,
   });
 
@@ -40,7 +37,11 @@ async function bootstrap(): Promise<void> {
     exclude: [{ path: '/', method: RequestMethod.GET }],
   });
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(config.port);
 }
 
-void bootstrap();
+void bootstrap().catch((error: unknown) => {
+  const message = error instanceof Error ? error.message : 'Unknown startup error.';
+  console.error(`[startup] ${message}`);
+  process.exitCode = 1;
+});

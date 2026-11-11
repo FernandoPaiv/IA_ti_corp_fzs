@@ -31,6 +31,7 @@ async function createLoanTestContext() {
   const oldConfig = {
     supabaseUrl: process.env.SUPABASE_URL,
     anonKey: process.env.SUPABASE_ANON_KEY,
+    jwksUri: process.env.JWKS_URI,
   };
   process.env.SUPABASE_ANON_KEY = 'qa-only-key';
 
@@ -68,6 +69,7 @@ async function createLoanTestContext() {
   const supabaseUrl = `http://127.0.0.1:${supabaseServer.address().port}`;
   issuer = `${supabaseUrl}/auth/v1`;
   process.env.SUPABASE_URL = supabaseUrl;
+  process.env.JWKS_URI = `${supabaseUrl}/auth/v1/.well-known/jwks.json`;
 
   const tenant = await prisma.tenant.create({
     data: { slug: `qa-loan-${randomUUID()}`, name: 'Isolated loan test tenant' },
@@ -130,6 +132,8 @@ async function createLoanTestContext() {
       else process.env.SUPABASE_URL = oldConfig.supabaseUrl;
       if (oldConfig.anonKey === undefined) delete process.env.SUPABASE_ANON_KEY;
       else process.env.SUPABASE_ANON_KEY = oldConfig.anonKey;
+      if (oldConfig.jwksUri === undefined) delete process.env.JWKS_URI;
+      else process.env.JWKS_URI = oldConfig.jwksUri;
     },
   };
 }

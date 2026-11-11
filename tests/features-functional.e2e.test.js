@@ -15,6 +15,7 @@ let app;
 let supabaseServer;
 let supabaseUrl;
 let issuer;
+let originalJwksUri;
 let api;
 let privateKey;
 let publicJwk;
@@ -92,6 +93,7 @@ function installExternalServiceMocks() {
 beforeAll(async () => {
   process.env.SUPABASE_ANON_KEY = 'qa-anon-key';
   process.env.PIXABAY_API_KEY = 'qa-pixabay-key';
+  originalJwksUri = process.env.JWKS_URI;
   await prisma.$connect();
 
   const keys = generateKeyPairSync('rsa', { modulusLength: 2048 });
@@ -138,6 +140,7 @@ beforeAll(async () => {
   supabaseUrl = `http://127.0.0.1:${supabaseServer.address().port}`;
   issuer = `${supabaseUrl}/auth/v1`;
   process.env.SUPABASE_URL = supabaseUrl;
+  process.env.JWKS_URI = `${supabaseUrl}/auth/v1/.well-known/jwks.json`;
 
   tenantA = await prisma.tenant.create({
     data: { slug: `qa-a-${randomUUID()}`, name: 'Functional test tenant A' },
@@ -193,6 +196,8 @@ afterAll(async () => {
   }
   if (app) await app.close();
   await prisma.$disconnect();
+  if (originalJwksUri === undefined) delete process.env.JWKS_URI;
+  else process.env.JWKS_URI = originalJwksUri;
   if (supabaseServer) {
     await new Promise((resolve, reject) => {
       supabaseServer.close((error) => error ? reject(error) : resolve());
@@ -237,16 +242,20 @@ describe('authenticated feature flows against local QA PostgreSQL', () => {
       .expect(401);
   });
 
-  test('tenant context is derived from signed token or a unique membership, never request input', async () => {
+  test('tenant context requires a signed tenant claim and never trusts request input', async () => {
     const noTenantClaimToken = createToken(userA, undefined);
-    const uniqueMembership = await api.get('/v1/equipamentos')
+    await api.get('/v1/equipamentos')
       .set('authorization', `Bearer ${noTenantClaimToken}`)
-      .expect(200);
-    expect(uniqueMembership.body.equipments.map((item) => item.id)).toContain(equipmentA.id);
+      .expect(401);
 
     const ambiguousToken = createToken(userMultiTenant, undefined);
     await api.get('/v1/equipamentos')
       .set('authorization', `Bearer ${ambiguousToken}`)
+      .expect(401);
+
+    const wrongTenantToken = createToken(userA, tenantB.id);
+    await api.get('/v1/equipamentos')
+      .set('authorization', `Bearer ${wrongTenantToken}`)
       .expect(401);
 
     const borrowResponse = await api.post(`/v1/emprestimos/solicitar/${equipmentA.id}`)
@@ -297,6 +306,31 @@ describe('authenticated feature flows against local QA PostgreSQL', () => {
       .set('authorization', `Bearer ${authTokenA}`)
       .send(results.body[0])
       .expect(404);
+  });
+
+  test('Pixabay outage or missing key leaves catalog endpoints available', async () => {
+    const originalKey = process.env.PIXABAY_API_KEY;
+    delete process.env.PIXABAY_API_KEY;
+    try {
+      await api.get('/v1/equipamentos/imagens/busca?q=notebook')
+        .set('authorization', `Bearer ${authTokenA}`)
+        .expect(200)
+        .expect([]);
+    } finally {
+      if (originalKey === undefined) delete process.env.PIXABAY_API_KEY;
+      else process.env.PIXABAY_API_KEY = originalKey;
+    }
+
+    const originalFetch = global.fetch;
+    global.fetch = jest.fn(async () => new Response('provider down', { status: 503 }));
+    try {
+      await api.get('/v1/equipamentos/imagens/busca?q=notebook')
+        .set('authorization', `Bearer ${authTokenA}`)
+        .expect(200)
+        .expect([]);
+    } finally {
+      global.fetch = originalFetch;
+    }
   });
 
   test('loan limit, overdue block, unavailable equipment, and tenant isolation are enforced', async () => {

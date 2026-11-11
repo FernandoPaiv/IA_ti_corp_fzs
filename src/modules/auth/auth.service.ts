@@ -13,6 +13,7 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3
 interface AuthConfig {
   url: URL;
   anonKey: string;
+  jwksUri: string;
 }
 
 export interface SupabaseSession {
@@ -90,7 +91,7 @@ export class AuthService {
       throw new UnauthorizedException('Token inválido ou expirado.');
     }
     const config = this.getConfig();
-    const jwksAddress = new URL('/auth/v1/.well-known/jwks.json', config.url).toString();
+    const jwksAddress = config.jwksUri;
     if (this.jwksUrl !== jwksAddress) {
       this.jwks = createRemoteJWKSet(new URL(jwksAddress));
       this.jwksUrl = jwksAddress;
@@ -125,30 +126,24 @@ export class AuthService {
       typeof sub !== 'string' ||
       !UUID_PATTERN.test(sub) ||
       typeof email !== 'string' ||
+      typeof tenantClaim !== 'string' ||
+      !UUID_PATTERN.test(tenantClaim) ||
       typeof issuedAt !== 'number' ||
       typeof expiresAt !== 'number'
     ) {
-      throw new UnauthorizedException('Token sem identidade válida.');
-    }
-
-    if (tenantClaim !== undefined && (typeof tenantClaim !== 'string' || !UUID_PATTERN.test(tenantClaim))) {
-      throw new UnauthorizedException('Token com tenant inválido.');
+      throw new UnauthorizedException('Token sem identidade ou tenant válidos.');
     }
 
     const memberships = await this.prisma.membership.findMany({
       where: {
         userId: sub,
-        ...(typeof tenantClaim === 'string' ? { tenantId: tenantClaim } : {}),
+        tenantId: tenantClaim,
       },
       select: { tenantId: true, role: true },
       take: 2,
     });
     if (memberships.length !== 1) {
-      throw new UnauthorizedException(
-        memberships.length === 0
-          ? 'Usuário sem vínculo ativo com este tenant.'
-          : 'Token sem tenant selecionado. Configure o claim tenant_id no Supabase Auth.',
-      );
+      throw new UnauthorizedException('Usuário sem vínculo ativo com o tenant do token.');
     }
     const membership = memberships[0];
     if (!membership || !['colaborador', 'operacao', 'admin'].includes(membership.role)) {
@@ -180,7 +175,22 @@ export class AuthService {
     if (url.protocol !== 'https:' && !['localhost', '127.0.0.1'].includes(url.hostname)) {
       throw new ServiceUnavailableException('SUPABASE_URL deve usar HTTPS.');
     }
-    return { url: new URL(url.origin), anonKey };
+    const projectUrl = new URL(url.origin);
+    const jwksUri = process.env.JWKS_URI?.trim() ||
+      new URL('/auth/v1/.well-known/jwks.json', projectUrl).toString();
+    let parsedJwksUri: URL;
+    try {
+      parsedJwksUri = new URL(jwksUri);
+    } catch {
+      throw new ServiceUnavailableException('JWKS_URI inválida.');
+    }
+    if (
+      parsedJwksUri.origin !== projectUrl.origin ||
+      parsedJwksUri.pathname !== '/auth/v1/.well-known/jwks.json'
+    ) {
+      throw new ServiceUnavailableException('JWKS_URI deve apontar para o endpoint JWKS deste projeto Supabase.');
+    }
+    return { url: projectUrl, anonKey, jwksUri: parsedJwksUri.toString() };
   }
 
   private async requestAuth(

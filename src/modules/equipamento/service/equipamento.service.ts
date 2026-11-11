@@ -1,9 +1,8 @@
 import {
-  BadGatewayException,
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
-  ServiceUnavailableException,
 } from '@nestjs/common';
 import { EquipamentoRepository } from '../repository/equipamento.repository';
 
@@ -32,6 +31,8 @@ function isPixabayImage(value: unknown): value is PixabayImage {
 
 @Injectable()
 export class EquipamentoService {
+  private readonly logger = new Logger(EquipamentoService.name);
+
   constructor(private readonly equipamentoRepository: EquipamentoRepository) {}
 
   async findById(equipmentId: string, tenantId: string): Promise<{ id: string; name: string; category: string; patrimony: string | null; status: string } | null> {
@@ -69,16 +70,17 @@ export class EquipamentoService {
   }
 
   async searchImages(query: string): Promise<PixabayImage[]> {
-    const apiKey = process.env.PIXABAY_API_KEY;
-    if (!apiKey) {
-      throw new ServiceUnavailableException('PIXABAY_API_KEY não está configurada.');
-    }
     const term = query.trim();
     if (term.length < 2 || term.length > 100) {
       throw new BadRequestException('O termo de busca deve ter entre 2 e 100 caracteres.');
     }
 
-    let response: Response;
+    const apiKey = process.env.PIXABAY_API_KEY?.trim();
+    if (!apiKey) {
+      this.logger.warn('PIXABAY_API_KEY is not configured; image search returned no results.');
+      return [];
+    }
+
     try {
       const url = new URL('https://pixabay.com/api/');
       url.search = new URLSearchParams({
@@ -88,43 +90,46 @@ export class EquipamentoService {
         safesearch: 'true',
         per_page: '20',
       }).toString();
-      response = await fetch(url);
-    } catch {
-      throw new ServiceUnavailableException('O provedor de imagens está indisponível.');
-    }
-    if (!response.ok) {
-      throw new BadGatewayException('O provedor de imagens rejeitou a busca.');
-    }
-
-    const data: unknown = await response.json();
-    if (typeof data !== 'object' || data === null || !('hits' in data) || !Array.isArray(data.hits)) {
-      throw new BadGatewayException('O provedor retornou uma resposta inválida.');
-    }
-
-    return data.hits.flatMap((hit): PixabayImage[] => {
-      if (
-        typeof hit !== 'object' ||
-        hit === null ||
-        !('id' in hit) ||
-        !('largeImageURL' in hit) ||
-        !('user' in hit) ||
-        !('pageURL' in hit) ||
-        typeof hit.id !== 'number' ||
-        typeof hit.largeImageURL !== 'string' ||
-        typeof hit.user !== 'string' ||
-        typeof hit.pageURL !== 'string' ||
-        !this.isPixabayUrl(hit.largeImageURL) ||
-        !this.isPixabayUrl(hit.pageURL)
-      ) {
+      const response = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      if (!response.ok) {
+        this.logger.warn(`Pixabay returned HTTP ${response.status}; image search returned no results.`);
         return [];
       }
-      return [{
-        sourceId: String(hit.id),
-        imageUrl: hit.largeImageURL,
-        photographer: hit.user,
-        pageUrl: hit.pageURL,
-      }];
-    });
+
+      const data: unknown = await response.json();
+      if (typeof data !== 'object' || data === null || !('hits' in data) || !Array.isArray(data.hits)) {
+        this.logger.warn('Pixabay returned an invalid response; image search returned no results.');
+        return [];
+      }
+
+      return data.hits.flatMap((hit): PixabayImage[] => {
+        if (
+          typeof hit !== 'object' ||
+          hit === null ||
+          !('id' in hit) ||
+          !('largeImageURL' in hit) ||
+          !('user' in hit) ||
+          !('pageURL' in hit) ||
+          typeof hit.id !== 'number' ||
+          typeof hit.largeImageURL !== 'string' ||
+          typeof hit.user !== 'string' ||
+          typeof hit.pageURL !== 'string' ||
+          !this.isPixabayUrl(hit.largeImageURL) ||
+          !this.isPixabayUrl(hit.pageURL)
+        ) {
+          return [];
+        }
+        return [{
+          sourceId: String(hit.id),
+          imageUrl: hit.largeImageURL,
+          photographer: hit.user,
+          pageUrl: hit.pageURL,
+        }];
+      });
+    } catch {
+      this.logger.warn('Pixabay request failed or timed out; image search returned no results.');
+      return [];
+    }
   }
 
   async setImage(
