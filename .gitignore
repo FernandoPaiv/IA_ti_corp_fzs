@@ -15,3 +15,7 @@ build/
 
 # Local frontend repo clone (separate GitHub repository)
 frontend-repo/
+
+# Nova demanda (briefings, arquivo de entrada, etc.) — persistido no repo,
+# mas sem rastreamento do git (arquivos podem ser editados, sem commits)
+nova_demanda/

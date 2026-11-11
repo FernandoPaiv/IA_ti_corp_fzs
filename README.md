@@ -38,6 +38,9 @@ O ponto que causa o erro é o **Output Directory com override salvo**. Apague-o.
 `.env.example` documenta os valores sem segredo. O `.env` real é local e não vai
 para o repositório (`rules/secrets.md`).
 
+Veja [docs/production-readiness.md](docs/production-readiness.md) para a lista
+completa de variáveis, migrations, seeds protegidos e configuração do hook JWT.
+
 ### URLs
 
 - Back (esta API): `https://ia-ti-corp-fzsbackend.vercel.app`
@@ -47,7 +50,7 @@ para o repositório (`rules/secrets.md`).
 
 ```bash
 npm run dev      # ts-node src/server.ts (API local, http://localhost:3000)
-npm run build    # tsc -p tsconfig.json
+npm run build    # gera o Prisma Client e compila TypeScript
 npm start        # node dist/server.js
 npm test         # jest --runInBand
 ```
